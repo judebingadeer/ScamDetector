@@ -1,0 +1,27 @@
+kind = "web"
+previewPath = "/"
+title = "Scam Detector"
+version = "1.0.0"
+id = "artifacts/scam-detector"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 18375
+
+[services.development]
+run = "pnpm --filter @workspace/scam-detector run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/scam-detector", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/scam-detector/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "18375"
+BASE_PATH = "/"

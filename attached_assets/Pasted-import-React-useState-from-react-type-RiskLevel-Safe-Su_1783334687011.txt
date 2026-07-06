@@ -1,0 +1,540 @@
+import React, { useState } from "react";
+
+type RiskLevel = "Safe" | "Suspicious" | "Possible Scam";
+
+interface AnalysisResult {
+  score: number;
+  level: RiskLevel;
+  reasons: string[];
+}
+
+interface IndicatorRule {
+  keywords: string[];
+  weight: number;
+  reason: string;
+}
+
+const URGENT_RULE: IndicatorRule = {
+  keywords: [
+    "urgent",
+    "immediately",
+    "within 24 hours",
+    "final warning",
+    "account suspended",
+    "act now",
+    "last chance",
+  ],
+  weight: 15,
+  reason: "Contains urgent language pressuring you to act quickly.",
+};
+
+const SENSITIVE_INFO_RULE: IndicatorRule = {
+  keywords: [
+    "password",
+    "otp",
+    "verification code",
+    "pin",
+    "bank card",
+    "credit card",
+    "cvv",
+  ],
+  weight: 20,
+  reason: "Asks for sensitive personal or financial information.",
+};
+
+const SHORTENED_URL_RULE: IndicatorRule = {
+  keywords: ["bit.ly", "tinyurl", "t.co", "goo.gl", "ow.ly"],
+  weight: 20,
+  reason: "Contains a shortened link, often used to hide the real destination.",
+};
+
+const OFFER_RULE: IndicatorRule = {
+  keywords: [
+    "you won",
+    "free money",
+    "prize",
+    "lottery",
+    "reward",
+    "claim your gift",
+  ],
+  weight: 15,
+  reason: "Promises a prize, reward, or offer that seems too good to be true.",
+};
+
+const THREAT_RULE: IndicatorRule = {
+  keywords: [
+    "legal action",
+    "arrest",
+    "penalty",
+    "your account will be closed",
+    "failure to comply",
+  ],
+  weight: 20,
+  reason: "Uses threatening language to intimidate you into responding.",
+};
+
+const VERIFY_RULE: IndicatorRule = {
+  keywords: [
+    "verify your account",
+    "confirm your account",
+    "update your account",
+    "verify your identity",
+    "click the link",
+  ],
+  weight: 15,
+  reason: "Asks you to verify or confirm your account details.",
+};
+
+const URL_REGEX = /(https?:\/\/[^\s]+|www\.[^\s]+)/i;
+
+function containsAny(text: string, keywords: string[]): boolean {
+  return keywords.some((keyword) => text.includes(keyword));
+}
+
+function analyzeMessage(message: string): AnalysisResult {
+  const lowerText = message.toLowerCase();
+  const reasons: string[] = [];
+  let score = 0;
+
+  const rules: IndicatorRule[] = [
+    URGENT_RULE,
+    SENSITIVE_INFO_RULE,
+    OFFER_RULE,
+    THREAT_RULE,
+    VERIFY_RULE,
+  ];
+
+  rules.forEach((rule) => {
+    if (containsAny(lowerText, rule.keywords)) {
+      score += rule.weight;
+      reasons.push(rule.reason);
+    }
+  });
+
+  if (containsAny(lowerText, SHORTENED_URL_RULE.keywords)) {
+    score += SHORTENED_URL_RULE.weight;
+    reasons.push(SHORTENED_URL_RULE.reason);
+  } else if (URL_REGEX.test(lowerText)) {
+    score += 10;
+    reasons.push("Contains a link. Be cautious before clicking any URL.");
+  }
+
+  if (score > 100) {
+    score = 100;
+  }
+
+  let level: RiskLevel;
+  if (score <= 30) {
+    level = "Safe";
+  } else if (score <= 65) {
+    level = "Suspicious";
+  } else {
+    level = "Possible Scam";
+  }
+
+  if (reasons.length === 0) {
+    reasons.push("No common scam indicators were detected in this message.");
+  }
+
+  return { score, level, reasons };
+}
+
+function getSafetyTips(level: RiskLevel): string[] {
+  if (level === "Safe") {
+    return [
+      "This message looks relatively safe, but always stay cautious.",
+      "If you are unsure about the sender, verify through an official channel.",
+      "Never share sensitive information unless you are fully certain of the source.",
+    ];
+  }
+
+  if (level === "Suspicious") {
+    return [
+      "Do not click on any links included in this message.",
+      "Do not share personal, financial, or account information.",
+      "Contact the organization directly using their official website or phone number.",
+      "Take your time. Legitimate organizations rarely demand instant action.",
+    ];
+  }
+
+  return [
+    "Do not click any links in this message.",
+    "Do not reply to the sender.",
+    "Never share passwords, OTPs, PINs, or card details.",
+    "Report this message to your email or phone provider.",
+    "Delete the message after reporting it.",
+    "If you already shared information, contact your bank or service provider immediately.",
+  ];
+}
+
+function getLevelColor(level: RiskLevel): string {
+  if (level === "Safe") return "#16a34a";
+  if (level === "Suspicious") return "#f59e0b";
+  return "#dc2626";
+}
+
+function getLevelBackground(level: RiskLevel): string {
+  if (level === "Safe") return "#ecfdf5";
+  if (level === "Suspicious") return "#fffbeb";
+  return "#fef2f2";
+}
+
+const App: React.FC = () => {
+  const [message, setMessage] = useState<string>("");
+  const [result, setResult] = useState<AnalysisResult | null>(null);
+
+  const handleAnalyze = (): void => {
+    if (message.trim().length === 0) {
+      setResult(null);
+      return;
+    }
+    const analysis = analyzeMessage(message);
+    setResult(analysis);
+  };
+
+  const handleClear = (): void => {
+    setMessage("");
+    setResult(null);
+  };
+
+  return (
+    <div className="app-container">
+      <style>{`
+        * {
+          box-sizing: border-box;
+        }
+
+        body, html {
+          margin: 0;
+          padding: 0;
+        }
+
+        .app-container {
+          min-height: 100vh;
+          width: 100%;
+          background: linear-gradient(180deg, #f0f4f8 0%, #e2e8f0 100%);
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+          display: flex;
+          justify-content: center;
+          padding: 32px 16px 64px 16px;
+        }
+
+        .content-wrapper {
+          width: 100%;
+          max-width: 720px;
+        }
+
+        .header {
+          text-align: center;
+          margin-bottom: 32px;
+        }
+
+        .logo {
+          width: 72px;
+          height: 72px;
+          margin: 0 auto 16px auto;
+          border-radius: 20px;
+          background: linear-gradient(135deg, #1e3a8a, #2563eb);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 8px 20px rgba(37, 99, 235, 0.35);
+        }
+
+        .logo-emoji {
+          font-size: 34px;
+        }
+
+        .app-title {
+          font-size: 32px;
+          font-weight: 800;
+          color: #0f172a;
+          margin: 0 0 8px 0;
+          letter-spacing: -0.5px;
+        }
+
+        .app-subtitle {
+          font-size: 16px;
+          color: #475569;
+          margin: 0;
+        }
+
+        .card {
+          background: #ffffff;
+          border-radius: 20px;
+          padding: 28px;
+          box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+          margin-bottom: 24px;
+          border: 1px solid #e2e8f0;
+        }
+
+        .textarea-label {
+          display: block;
+          font-size: 14px;
+          font-weight: 600;
+          color: #334155;
+          margin-bottom: 10px;
+        }
+
+        .message-textarea {
+          width: 100%;
+          min-height: 160px;
+          resize: vertical;
+          padding: 14px 16px;
+          font-size: 15px;
+          border-radius: 12px;
+          border: 1.5px solid #cbd5e1;
+          font-family: inherit;
+          color: #0f172a;
+          outline: none;
+          transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .message-textarea:focus {
+          border-color: #2563eb;
+          box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+        }
+
+        .button-row {
+          display: flex;
+          gap: 12px;
+          margin-top: 18px;
+          flex-wrap: wrap;
+        }
+
+        .btn {
+          border: none;
+          border-radius: 12px;
+          padding: 13px 24px;
+          font-size: 15px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+          flex: 1;
+          min-width: 120px;
+        }
+
+        .btn:active {
+          transform: scale(0.98);
+        }
+
+        .btn-primary {
+          background: linear-gradient(135deg, #2563eb, #1e40af);
+          color: #ffffff;
+          box-shadow: 0 6px 16px rgba(37, 99, 235, 0.3);
+        }
+
+        .btn-primary:hover {
+          opacity: 0.92;
+        }
+
+        .btn-secondary {
+          background: #f1f5f9;
+          color: #334155;
+          border: 1.5px solid #cbd5e1;
+        }
+
+        .btn-secondary:hover {
+          background: #e2e8f0;
+        }
+
+        .result-card {
+          background: #ffffff;
+          border-radius: 20px;
+          padding: 28px;
+          box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+          margin-bottom: 24px;
+          border: 1px solid #e2e8f0;
+          animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(8px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .result-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 12px;
+          margin-bottom: 20px;
+        }
+
+        .risk-badge {
+          display: inline-flex;
+          align-items: center;
+          padding: 8px 18px;
+          border-radius: 999px;
+          font-weight: 700;
+          font-size: 15px;
+        }
+
+        .risk-score-text {
+          font-size: 15px;
+          font-weight: 600;
+          color: #334155;
+        }
+
+        .progress-track {
+          width: 100%;
+          height: 14px;
+          background: #e2e8f0;
+          border-radius: 999px;
+          overflow: hidden;
+          margin-bottom: 24px;
+        }
+
+        .progress-fill {
+          height: 100%;
+          border-radius: 999px;
+          transition: width 0.4s ease;
+        }
+
+        .section-title {
+          font-size: 16px;
+          font-weight: 700;
+          color: #0f172a;
+          margin: 0 0 12px 0;
+        }
+
+        .reasons-list, .tips-list {
+          margin: 0 0 20px 0;
+          padding-left: 20px;
+          color: #334155;
+          font-size: 14.5px;
+          line-height: 1.7;
+        }
+
+        .tips-list {
+          margin-bottom: 0;
+        }
+
+        .disclaimer {
+          text-align: center;
+          font-size: 13px;
+          color: #64748b;
+          padding: 16px;
+          line-height: 1.6;
+        }
+
+        .empty-hint {
+          text-align: center;
+          color: #94a3b8;
+          font-size: 14px;
+          padding: 8px 0 0 0;
+        }
+
+        @media (max-width: 480px) {
+          .app-title {
+            font-size: 26px;
+          }
+
+          .card, .result-card {
+            padding: 20px;
+            border-radius: 16px;
+          }
+
+          .btn {
+            flex: 1 1 100%;
+          }
+        }
+      `}</style>
+
+      <div className="content-wrapper">
+        <div className="header">
+          <div className="logo">
+            <span className="logo-emoji">🛡️</span>
+          </div>
+          <h1 className="app-title">Scam Detector</h1>
+          <p className="app-subtitle">
+            Check suspicious messages before you trust them.
+          </p>
+        </div>
+
+        <div className="card">
+          <label className="textarea-label" htmlFor="message-input">
+            Paste the suspicious message below
+          </label>
+          <textarea
+            id="message-input"
+            className="message-textarea"
+            placeholder="Example: Your account has been suspended. Click this link within 24 hours and verify your account to avoid permanent closure..."
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+          />
+          <div className="button-row">
+            <button className="btn btn-primary" onClick={handleAnalyze}>
+              Analyze
+            </button>
+            <button className="btn btn-secondary" onClick={handleClear}>
+              Clear
+            </button>
+          </div>
+          {message.trim().length === 0 && (
+            <p className="empty-hint">
+              Paste a message above and click Analyze to check its risk level.
+            </p>
+          )}
+        </div>
+
+        {result && (
+          <div className="result-card">
+            <div className="result-header">
+              <span
+                className="risk-badge"
+                style={{
+                  color: getLevelColor(result.level),
+                  backgroundColor: getLevelBackground(result.level),
+                }}
+              >
+                {result.level}
+              </span>
+              <span className="risk-score-text">
+                Risk Score: {result.score} / 100
+              </span>
+            </div>
+
+            <div className="progress-track">
+              <div
+                className="progress-fill"
+                style={{
+                  width: `${result.score}%`,
+                  backgroundColor: getLevelColor(result.level),
+                }}
+              />
+            </div>
+
+            <h3 className="section-title">Why this result?</h3>
+            <ul className="reasons-list">
+              {result.reasons.map((reason, index) => (
+                <li key={index}>{reason}</li>
+              ))}
+            </ul>
+
+            <h3 className="section-title">Safety Tips</h3>
+            <ul className="tips-list">
+              {getSafetyTips(result.level).map((tip, index) => (
+                <li key={index}>{tip}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        <p className="disclaimer">
+          This tool provides an estimated risk level only. Always verify
+          suspicious messages through official channels.
+        </p>
+      </div>
+    </div>
+  );
+};
+
+export default App;
