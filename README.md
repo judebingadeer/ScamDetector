@@ -1,6 +1,6 @@
 <div align="center">
 
-<a href="https://replit.com/@judebingadeer/ScamDetector">
+<a href="https://asset-manager--judebingadeer.replit.app/">
   <img src="scam-detector-banner.png" alt="Scam Detector Banner" width="100%">
 </a>
 
@@ -14,7 +14,7 @@ Scam Detector analyzes suspicious messages and estimates their risk level before
 
 <br>
 
-<a href="https://replit.com/@judebingadeer/ScamDetector">
+<a href="https://asset-manager--judebingadeer.replit.app/">
   <img src="https://img.shields.io/badge/LIVE_DEMO-OPEN_SCAM_DETECTOR-2F6BFF?style=for-the-badge&logo=googlechrome&logoColor=white&labelColor=0B1220" alt="Live Demo">
 </a>
 
@@ -54,7 +54,7 @@ Instead of returning only a basic safe-or-unsafe label, the application analyzes
 
 <div align="center">
 
-<a href="https://replit.com/@judebingadeer/ScamDetector">
+<a href="https://asset-manager--judebingadeer.replit.app/">
   <img src="https://img.shields.io/badge/OPEN_THE_APPLICATION-ANALYZE_A_MESSAGE-2F6BFF?style=for-the-badge&logo=rocket&logoColor=white&labelColor=0B1220" alt="Open Scam Detector">
 </a>
 
@@ -237,7 +237,7 @@ A low-risk result does not guarantee that a message is legitimate, and a high-ri
 
 <br>
 
-<a href="https://replit.com/@judebingadeer/ScamDetector">
+<a href="https://asset-manager--judebingadeer.replit.app/">
   <img src="https://img.shields.io/badge/TRY_SCAM_DETECTOR-LIVE_NOW-2F6BFF?style=for-the-badge&logo=googlechrome&logoColor=white&labelColor=0B1220" alt="Try Scam Detector">
 </a>
 
